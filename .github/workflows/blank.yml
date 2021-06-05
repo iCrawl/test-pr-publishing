@@ -5,13 +5,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Do the logs
-        run: |
-          echo "${{ github.event.client_payload.repo }}, ${{ github.event.client_payload.owner }}, ${{ github.event.client_payload.pr }}"
       - name: Do the checkout thing
         uses: actions/checkout@v2
         with:
-          repository: ${{ github.event.client_payload.prRepo }}
           ref: ${{ github.event.client_payload.prSHA }}
       - name: Do the comment thing
         uses: actions/github-script@v4
@@ -22,5 +18,14 @@ jobs:
               issue_number: ${{ github.event.client_payload.pr }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '@${{ github.actor }} Build(s) suceeded.'
+              body: `Hey @${{ github.event.client_payload.actor }}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
+              \`\`\`
+              {
+                  "depdendecies": {
+                      "discord.js": ""
+                  }
+              }
+              \`\`\`
+              and then running \`npm install\`, or via \`npm i ""\`.
+              `
             })
