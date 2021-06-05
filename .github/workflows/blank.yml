@@ -12,10 +12,9 @@ jobs:
         with:
           script: |
             try {
-              const permissions = await github.repos.getCollaboratorPermissionLevel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              });
+              const permissions = await github.repos.getCollaboratorPermissionLevel(
+                context.repo({ username: user.login }),
+              );
               const level = permissions.data.permission;
               if (level !== 'admin' && level !== 'write') {
                 core.setFailed(`Permissions to run build for user ${context.payload.comment.user.login} denied.`)
@@ -30,8 +29,7 @@ jobs:
           script: |
             try {
               const pullRequest = await github.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                ...context.repo(),
                 pull_number: context.payload.issue.number,
               });
               return pullRequest.data;
@@ -43,9 +41,8 @@ jobs:
         with:
           script: |
             github.issues.createComment({
+              ...context.repo(),
               issue_number: context.payload.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
               body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}.`,
             })
       - name: Do the checkout thing
@@ -57,9 +54,8 @@ jobs:
         with:
           script: |
             github.issues.createComment({
+              ...context.repo(),
               issue_number: context.payload.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
               body: `Hey @${context.payload.comment.user.login}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
               \`\`\`
               {
