@@ -1,0 +1,36 @@
+name: CI
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'The repository'
+        required: true
+      ref:
+        description: 'The ref'
+        required: true
+      pr:
+        description: 'The PR'
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Do the logs
+        run: |
+          echo "${{ github.event.inputs.repository }}, ${{ github.event.inputs.ref }}, ${{ github.event.inputs.pr }}"
+      - name: Do the checkout thing
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.ref }}
+      - name: Do the comment thing
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.issues.createComment({
+              issue_number: ${{ github.event.inputs.pr }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '@${{ github.actor }} Build(s) suceeded.'
+            })
