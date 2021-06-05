@@ -60,7 +60,7 @@ jobs:
               issue_number: context.payload.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Hey @${{ context.payload.comment.user }}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
+              body: `Hey @${context.payload.comment.user.login}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
               \`\`\`
               {
                   "depdendecies": {
