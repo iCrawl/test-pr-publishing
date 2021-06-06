@@ -31,7 +31,7 @@ jobs:
     name: Fetch pull request
     runs-on: ubuntu-latest
     needs: check_permissions
-    if: ${{ !fromJSON(needs.check_permissions.permission.outputs.result) }}
+    if: ${{ !fromJSON(needs.check_permissions.outputs.permission) }}
     outputs:
       get-pr: ${{ steps.get-pr.outputs.result }}
     steps:
@@ -64,7 +64,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(needs.fetch_pr.get-pr.outputs.result).head.sha }}.`,
+              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(needs.fetch_pr.outputs.get-pr).head.sha }}.`,
             })
             
   pack:
@@ -75,7 +75,7 @@ jobs:
       - name: Do the checkout thing
         uses: actions/checkout@v2
         with:
-          ref: ${{ fromJSON(needs.fetch_pr.get-pr.outputs.result).merge_commit_sha }}
+          ref: ${{ fromJSON(needs.fetch_pr.outputs.get-pr).merge_commit_sha }}
           
   done_comment:
     name: Post success comment
@@ -90,7 +90,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: `Hey @${context.payload.comment.user.login}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
+              body: `Hey @${context.payload.comment.user.login}, I've packed this into an installable tgz. You can install it for testing by referencing it in your \`package.json\` like so:
               \`\`\`
               {
                   "depdendencies": {
