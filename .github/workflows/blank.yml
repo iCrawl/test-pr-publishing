@@ -23,6 +23,12 @@ jobs:
             } catch (error) {
               core.setFailed(`Request failed with ${error}`);
             }
+      - name: Do the logging thing
+        uses: actions/github-script@v4
+        with:
+          script: |
+            console.log(${{ steps.permission.outputs.result }});
+            console.log(typeof ${{ steps.permission.outputs.result }});
       - name: Do the PR fetching
         if: steps.permission.outputs.result
         uses: actions/github-script@v4
