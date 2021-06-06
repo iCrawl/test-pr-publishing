@@ -31,7 +31,7 @@ jobs:
     name: Fetch pull request
     runs-on: ubuntu-latest
     needs: check_permissions
-    if: ${{ !fromJSON(check_permissions.permission.outputs.result) }}
+    if: ${{ !fromJSON(needs.check_permissions.permission.outputs.result) }}
     outputs:
       get-pr: ${{ steps.get-pr.outputs.result }}
     steps:
@@ -64,7 +64,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(fetch_pr.get-pr.outputs.result).head.sha }}.`,
+              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(needs.fetch_pr.get-pr.outputs.result).head.sha }}.`,
             })
             
   pack:
@@ -75,7 +75,7 @@ jobs:
       - name: Do the checkout thing
         uses: actions/checkout@v2
         with:
-          ref: ${{ fromJSON(fetch_pr.get-pr.outputs.result).merge_commit_sha }}
+          ref: ${{ fromJSON(needs.fetch_pr.get-pr.outputs.result).merge_commit_sha }}
           
   done_comment:
     name: Post success comment
