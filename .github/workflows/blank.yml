@@ -19,12 +19,12 @@ jobs:
                 username: context.payload.comment.user.login,
               });
               const level = permissions.data.permission;
-              return level !== 'admin' && level !== 'write';
+              return level === 'admin' && level === 'write';
             } catch (error) {
               core.setFailed(`Request failed with ${error}`);
             }
       - name: Do the PR fetching
-        if: fromJSON(steps.permission.outputs.result)
+        if: steps.permission.outputs.result
         uses: actions/github-script@v4
         id: get-pr
         with:
@@ -40,7 +40,7 @@ jobs:
               core.setFailed(`Request failed with ${error}`);
             }
       - name: Do the first comment thing
-        if: fromJSON(steps.permission.outputs.result)
+        if: steps.permission.outputs.result
         uses: actions/github-script@v4
         with:
           script: |
@@ -51,12 +51,12 @@ jobs:
               body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}.`,
             })
       - name: Do the checkout thing
-        if: fromJSON(steps.permission.outputs.result)
+        if: steps.permission.outputs.result
         uses: actions/checkout@v2
         with:
           ref: ${{ fromJSON(steps.get-pr.outputs.result).merge_commit_sha }}
       - name: Do the second comment thing
-        if: fromJSON(steps.permission.outputs.result)
+        if: steps.permission.outputs.result
         uses: actions/github-script@v4
         with:
           script: |
