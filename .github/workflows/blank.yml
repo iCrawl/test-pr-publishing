@@ -3,9 +3,12 @@ on:
   issue_comment:
     types: [created]
 jobs:
-  build:
+  check_permissions:
+    name: Check permissions
     runs-on: ubuntu-latest
     if: github.event.issue.user.type == 'User' && startsWith(github.event.comment.body, '/pack this') && github.event.issue.pull_request
+    outputs:
+      permission: ${{ steps.permission.outputs.result }}
     steps:
       - name: Do the permission checking
         uses: actions/github-script@v4
@@ -23,8 +26,16 @@ jobs:
             } catch (error) {
               core.setFailed(`Request failed with ${error}`);
             }
+  
+  fetch_pr:
+    name: Fetch pull request
+    runs-on: ubuntu-latest
+    needs: check_permissions
+    if: ${{ !fromJSON(check_permissions.permission.outputs.result) }}
+    outputs:
+      get-pr: ${{ steps.get-pr.outputs.result }}
+    steps:
       - name: Do the PR fetching
-        if: ${{ !fromJSON(steps.permission.outputs.result) }}
         uses: actions/github-script@v4
         id: get-pr
         with:
@@ -39,8 +50,13 @@ jobs:
             } catch (error) {
               core.setFailed(`Request failed with ${error}`);
             }
+            
+  build_comment:
+    name: Post build start comment
+    runs-on: ubuntu-latest
+    needs: fetch_pr
+    steps:
       - name: Do the first comment thing
-        if: ${{ !fromJSON(steps.permission.outputs.result) }}
         uses: actions/github-script@v4
         with:
           script: |
@@ -48,15 +64,25 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}.`,
+              body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(fetch_pr.get-pr.outputs.result).head.sha }}.`,
             })
+            
+  pack:
+    name: Pack package
+    runs-on: ubuntu-latest
+    needs: [fetch_pr, build_comment]
+    steps:
       - name: Do the checkout thing
-        if: ${{ !fromJSON(steps.permission.outputs.result) }}
         uses: actions/checkout@v2
         with:
-          ref: ${{ fromJSON(steps.get-pr.outputs.result).merge_commit_sha }}
+          ref: ${{ fromJSON(fetch_pr.get-pr.outputs.result).merge_commit_sha }}
+          
+  done_comment:
+    name: Post success comment
+    runs-on: ubuntu-latest
+    needs: pack
+    steps:
       - name: Do the second comment thing
-        if: ${{ !fromJSON(steps.permission.outputs.result) }}
         uses: actions/github-script@v4
         with:
           script: |
