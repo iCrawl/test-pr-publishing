@@ -9,6 +9,7 @@ jobs:
     steps:
       - name: Do the permission checking
         uses: actions/github-script@v4
+        id: permission
         with:
           script: |
             try {
@@ -18,13 +19,12 @@ jobs:
                 username: context.payload.comment.user.login,
               });
               const level = permissions.data.permission;
-              if (level !== 'admin' && level !== 'write') {
-                core.setFailed(`Permissions to run build for user ${context.payload.comment.user.login} denied.`)
-              }
+              return level === 'admin' && level === 'write';
             } catch (error) {
               core.setFailed(`Request failed with ${error}`);
             }
       - name: Do the PR fetching
+        if: fromJSON(steps.permission.outputs.result)
         uses: actions/github-script@v4
         id: get-pr
         with:
@@ -40,6 +40,7 @@ jobs:
               core.setFailed(`Request failed with ${error}`);
             }
       - name: Do the first comment thing
+        if: fromJSON(steps.permission.outputs.result)
         uses: actions/github-script@v4
         with:
           script: |
@@ -50,10 +51,12 @@ jobs:
               body: `Hey @${context.payload.comment.user.login}, I've triggered a build for ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}.`,
             })
       - name: Do the checkout thing
+        if: fromJSON(steps.permission.outputs.result)
         uses: actions/checkout@v2
         with:
           ref: ${{ fromJSON(steps.get-pr.outputs.result).merge_commit_sha }}
       - name: Do the second comment thing
+        if: fromJSON(steps.permission.outputs.result)
         uses: actions/github-script@v4
         with:
           script: |
@@ -64,7 +67,7 @@ jobs:
               body: `Hey @${context.payload.comment.user.login}, I've packed this into an installable tgz. You can install it for testing by referencing it in your package.json like so:
               \`\`\`
               {
-                  "depdendecies": {
+                  "depdendencies": {
                       "discord.js": ""
                   }
               }
